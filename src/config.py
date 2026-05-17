@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
-DEFAULT_CALENDAR_NAME = "Patinage Montréal"
+DEFAULT_CALENDAR_NAME = "Patinage"
 DEFAULT_TIME_ZONE = "America/Toronto"
 
 

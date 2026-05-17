@@ -114,7 +114,7 @@ Run:
 python3 src/main.py --calendar-smoke-test
 ```
 
-The first run opens a Google OAuth browser flow and saves `token.json`, also ignored by Git. The command creates or finds a dedicated calendar named `Patinage Montréal`, then creates one hardcoded test event.
+The first run opens a Google OAuth browser flow and saves `token.json`, also ignored by Git. The command creates or finds a dedicated calendar named `Patinage`, then creates one hardcoded test event.
 
 To create and immediately delete the test event:
 
