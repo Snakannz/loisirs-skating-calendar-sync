@@ -1,5 +1,7 @@
 .env
 .venv/
+credentials.json
+token.json
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -7,4 +9,3 @@ __pycache__/
 .DS_Store
 data/*.sqlite
 data/*.sqlite-*
-
