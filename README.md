@@ -80,6 +80,8 @@ This does not create, update, or delete Google Calendar events. It only compares
 
 Untimed activities, such as the current `Patinage artistique` date range, are intentionally not included in calendar sync planning because they do not have precise start and end times.
 
+Before planning or syncing calendar events, the app deduplicates identical timed windows. If Loisirs returns two activity IDs for the same visible rink/time/title/location, only one Google Calendar event is kept.
+
 ## Calendar Sync
 
 After Google OAuth is configured, run:

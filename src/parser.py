@@ -21,6 +21,20 @@ def parse_skating_windows(search_response: dict) -> list[SkatingWindow]:
     return windows
 
 
+def dedupe_skating_windows(windows: list[SkatingWindow]) -> list[SkatingWindow]:
+    seen = set()
+    results = []
+
+    for window in windows:
+        key = _calendar_identity_key(window)
+        if key in seen:
+            continue
+        seen.add(key)
+        results.append(window)
+
+    return results
+
+
 def parse_untimed_activities(search_response: dict) -> list[SkatingActivity]:
     activities: list[SkatingActivity] = []
     for activity in search_response.get("results", []):
@@ -181,3 +195,17 @@ def _description(activity: dict, status: str, url: str) -> str:
 def _source_key(activity_id: int, day: date, start_time: str, end_time: str, venue: str) -> str:
     safe_venue = venue.replace("|", " ").strip()
     return f"loisirs-mtl|{activity_id}|{day.isoformat()}|{start_time}|{end_time}|{safe_venue}"
+
+
+def _calendar_identity_key(window: SkatingWindow) -> tuple[str, str, str, str, str]:
+    return (
+        window.kind,
+        window.start,
+        window.end,
+        _normalize_identity_text(window.title),
+        _normalize_identity_text(window.location),
+    )
+
+
+def _normalize_identity_text(value: str) -> str:
+    return " ".join(value.casefold().split())

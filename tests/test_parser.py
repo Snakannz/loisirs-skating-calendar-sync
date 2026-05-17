@@ -12,6 +12,7 @@ from parser import (
     PRIMARY,
     PUBLIC_SKATE,
     SECONDARY,
+    dedupe_skating_windows,
     parse_skating_windows,
     parse_untimed_activities,
 )
@@ -69,6 +70,19 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(activity.importance, PRIMARY)
         self.assertEqual(activity.start_date, "2026-03-21")
         self.assertEqual(activity.end_date, "2026-05-31")
+
+    def test_dedupes_same_calendar_window_even_with_different_activity_id(self) -> None:
+        fixture = ROOT / "tests" / "fixtures" / "loisirs_response.json"
+        response = json.loads(fixture.read_text(encoding="utf-8"))
+        duplicate = dict(response["results"][0])
+        duplicate["id"] = 999999
+        response["results"].insert(1, duplicate)
+
+        raw_windows = parse_skating_windows(response)
+        deduped_windows = dedupe_skating_windows(raw_windows)
+
+        self.assertEqual(len(raw_windows), 6)
+        self.assertEqual(len(deduped_windows), 5)
 
 
 if __name__ == "__main__":

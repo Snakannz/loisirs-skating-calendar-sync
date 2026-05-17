@@ -17,6 +17,7 @@ from parser import (
     FIGURE_SKATING,
     OTHER_SKATING,
     PUBLIC_SKATE,
+    dedupe_skating_windows,
     parse_skating_windows,
     parse_untimed_activities,
 )
@@ -62,6 +63,7 @@ def run_fetch(args: argparse.Namespace) -> None:
     untimed_activities = parse_untimed_activities(response)
     windows = filter_items_by_kind(windows, args.kind)
     untimed_activities = filter_items_by_kind(untimed_activities, args.kind)
+    windows = dedupe_skating_windows(windows)
     windows = sorted(windows, key=lambda window: window.start)
 
     if args.future_only or args.next or args.sync_plan or args.sync_calendar:
