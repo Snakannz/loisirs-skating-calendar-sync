@@ -20,6 +20,7 @@ from parser import (
     parse_skating_windows,
     parse_untimed_activities,
 )
+from sync_state import SyncState, plan_sync, summarize_actions
 
 
 KIND_ALIASES = {
@@ -57,11 +58,15 @@ def run_fetch(args: argparse.Namespace) -> None:
     untimed_activities = filter_items_by_kind(untimed_activities, args.kind)
     windows = sorted(windows, key=lambda window: window.start)
 
-    if args.future_only or args.next:
+    if args.future_only or args.next or args.sync_plan:
         windows = filter_future_windows(windows, args.time_zone)
 
     if args.next:
         windows = windows[:1]
+
+    if args.sync_plan:
+        print_sync_plan(args, windows)
+        return
 
     if args.json:
         output = {"windows": [window.to_dict() for window in windows]}
@@ -99,6 +104,29 @@ def filter_items_by_kind(items: list, kind_arg: str) -> list:
 def filter_future_windows(windows: list, time_zone: str) -> list:
     now = datetime.now(ZoneInfo(time_zone))
     return [window for window in windows if datetime.fromisoformat(window.start) >= now]
+
+
+def print_sync_plan(args: argparse.Namespace, windows: list) -> None:
+    state = SyncState(args.state_db_file)
+    state.initialize()
+    actions = plan_sync(windows, state.get_all())
+    summary = summarize_actions(actions)
+
+    print(f"State database: {args.state_db_file}")
+    print(
+        "Plan: "
+        f"{summary['create']} create, "
+        f"{summary['update']} update, "
+        f"{summary['keep']} keep, "
+        f"{summary['delete']} delete"
+    )
+
+    for action in actions:
+        if action.window is not None:
+            window = action.window
+            print(f"{action.action.upper()} | {window.start} | {window.kind} | {window.title}")
+        else:
+            print(f"{action.action.upper()} | {action.source_key}")
 
 
 def run_calendar_smoke_test(args: argparse.Namespace) -> None:
@@ -145,6 +173,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--json", action="store_true", help="Print normalized windows as JSON.")
     parser.add_argument(
+        "--sync-plan",
+        action="store_true",
+        help="Compare current timed windows with local SQLite state without changing Google Calendar.",
+    )
+    parser.add_argument(
         "--calendar-smoke-test",
         action="store_true",
         help="Create a hardcoded test event in the dedicated Google Calendar.",
@@ -175,6 +208,12 @@ def parse_args() -> argparse.Namespace:
         "--time-zone",
         default=DEFAULT_TIME_ZONE,
         help="Calendar event time zone.",
+    )
+    parser.add_argument(
+        "--state-db-file",
+        default=env_path("SYNC_STATE_DB_FILE", "data/sync.sqlite"),
+        type=env_path_arg,
+        help="Path to the local SQLite sync-state database.",
     )
     return parser.parse_args()
 

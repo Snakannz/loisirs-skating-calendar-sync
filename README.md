@@ -2,7 +2,7 @@
 
 Python scraper/sync tool for Loisirs Montréal skating availability.
 
-Current status: Phase 2. It calls the hidden Loisirs Montréal JSON API, prints normalized skating windows, and has a Google Calendar client ready for a fake-event smoke test.
+Current status: Phase 3. It calls the hidden Loisirs Montréal JSON API, prints normalized skating windows, classifies primary vs secondary skating activities, and can compare timed windows against local SQLite sync state.
 
 ## Discovered Endpoints
 
@@ -39,6 +39,7 @@ python3 src/main.py --search patin --expertise-field-id 361
 python3 src/main.py --kind figure --include-untimed
 python3 src/main.py --kind public --future-only
 python3 src/main.py --kind public --next
+python3 src/main.py --kind public --sync-plan
 python3 src/main.py --json
 ```
 
@@ -51,6 +52,33 @@ Skating activity kinds:
 | `other_skating` | `other` | Ice-sport rows that do not match the first two categories |
 
 Current caveat: the live Loisirs API returns `Patinage artistique` as a date-range activity with no timed schedule. The scraper keeps it visible with `--include-untimed`, but it cannot make a precise timed calendar event for that row until the API exposes start/end times or we find another endpoint.
+
+## SQLite Sync State
+
+SQLite is a small database stored in one local file:
+
+```text
+data/sync.sqlite
+```
+
+The sync state remembers which Loisirs windows have already been matched to Google Calendar events:
+
+| Column | Meaning |
+| --- | --- |
+| `source_key` | Stable ID for one Loisirs skating window |
+| `google_event_id` | The matching Google Calendar event ID |
+| `content_hash` | Fingerprint of event content, used to detect changes |
+| `last_seen_at` | When the scraper last saw this window |
+
+Run a safe dry-run plan:
+
+```bash
+python3 src/main.py --kind public --sync-plan
+```
+
+This does not create, update, or delete Google Calendar events. It only compares the current timed skating windows with the local SQLite state and prints what a real sync would do.
+
+Untimed activities, such as the current `Patinage artistique` date range, are intentionally not included in calendar sync planning because they do not have precise start and end times.
 
 ## Google Calendar Smoke Test
 
@@ -92,6 +120,5 @@ python3 -m unittest discover -s tests
 
 1. Keep Phase 1 stable: direct API fetch plus normalized skating windows.
 2. Confirm Google Calendar OAuth with the smoke test.
-3. Add SQLite sync state.
-4. Wire create/update/delete sync.
-5. Schedule with `launchd`.
+3. Wire create/update/delete sync using SQLite state.
+4. Schedule with `launchd`.
