@@ -4,6 +4,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from calendar_client import GoogleCalendarClient, build_smoke_test_window
+from calendar_state import CalendarSyncState
 from config import (
     DEFAULT_CALENDAR_NAME,
     DEFAULT_TIME_ZONE,
@@ -119,12 +120,14 @@ def filter_future_windows(windows: list, time_zone: str) -> list:
 
 
 def print_sync_plan(args: argparse.Namespace, windows: list) -> None:
-    state = SyncState(args.state_db_file)
+    state = build_sync_state(args)
     state.initialize()
-    actions = plan_sync(windows, get_syncable_saved_events(state, args.time_zone))
+    actions = plan_sync(windows, state.get_all())
     summary = summarize_actions(actions)
 
-    print(f"State database: {args.state_db_file}")
+    print(f"State backend: {args.state_backend}")
+    if args.state_backend == "sqlite":
+        print(f"State database: {args.state_db_file}")
     print(
         "Plan: "
         f"{summary['create']} create, "
@@ -142,17 +145,16 @@ def print_sync_plan(args: argparse.Namespace, windows: list) -> None:
 
 
 def run_calendar_sync(args: argparse.Namespace, windows: list) -> None:
-    state = SyncState(args.state_db_file)
     calendar_client = GoogleCalendarClient(
         credentials_path=args.google_credentials_file,
         token_path=args.google_token_file,
         time_zone=args.time_zone,
     )
     calendar_id = calendar_client.get_or_create_calendar(args.calendar_name)
-    syncable_state = FutureOnlySyncState(state, args.time_zone)
+    state = build_sync_state(args, calendar_client=calendar_client, calendar_id=calendar_id)
     result = sync_calendar(
         windows=windows,
-        state=syncable_state,
+        state=state,
         calendar_client=calendar_client,
         calendar_id=calendar_id,
         time_zone=args.time_zone,
@@ -160,7 +162,9 @@ def run_calendar_sync(args: argparse.Namespace, windows: list) -> None:
     summary = result.summary
 
     print(f"Calendar: {args.calendar_name} ({calendar_id})")
-    print(f"State database: {args.state_db_file}")
+    print(f"State backend: {args.state_backend}")
+    if args.state_backend == "sqlite":
+        print(f"State database: {args.state_db_file}")
     print(
         "Synced: "
         f"{summary['create']} created, "
@@ -168,6 +172,25 @@ def run_calendar_sync(args: argparse.Namespace, windows: list) -> None:
         f"{summary['keep']} kept, "
         f"{summary['delete']} deleted"
     )
+
+
+def build_sync_state(args: argparse.Namespace, calendar_client=None, calendar_id: str | None = None):
+    if args.state_backend == "calendar":
+        if calendar_client is None:
+            calendar_client = GoogleCalendarClient(
+                credentials_path=args.google_credentials_file,
+                token_path=args.google_token_file,
+                time_zone=args.time_zone,
+            )
+        if calendar_id is None:
+            calendar_id = calendar_client.get_or_create_calendar(args.calendar_name)
+        return CalendarSyncState(
+            calendar_client=calendar_client,
+            calendar_id=calendar_id,
+            time_min=datetime.now(ZoneInfo(args.time_zone)).isoformat(),
+        )
+
+    return FutureOnlySyncState(SyncState(args.state_db_file), args.time_zone)
 
 
 def get_syncable_saved_events(state: SyncState, time_zone: str):
@@ -286,6 +309,12 @@ def parse_args() -> argparse.Namespace:
         default=env_path("SYNC_STATE_DB_FILE", "data/sync.sqlite"),
         type=env_path_arg,
         help="Path to the local SQLite sync-state database.",
+    )
+    parser.add_argument(
+        "--state-backend",
+        choices=["sqlite", "calendar"],
+        default=env_str("SYNC_STATE_BACKEND", "sqlite"),
+        help="Where sync state comes from. Use calendar for stateless cloud runs.",
     )
     return parser.parse_args()
 

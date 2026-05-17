@@ -94,6 +94,33 @@ On the first run, the app creates Google Calendar events and saves their Google 
 
 The sync only considers future timed windows. Saved past events are not deleted just because they are no longer future windows.
 
+## GitHub Actions
+
+The repository includes an hourly workflow:
+
+```text
+.github/workflows/sync-skating.yml
+```
+
+It runs:
+
+```bash
+python src/main.py --kind public --sync-calendar --state-backend calendar
+```
+
+The `calendar` state backend reads existing managed events from Google Calendar extended properties, so GitHub Actions does not need `data/sync.sqlite`.
+
+Add these GitHub repository secrets:
+
+| Secret | Value |
+| --- | --- |
+| `GOOGLE_CREDENTIALS_JSON` | Contents of local `credentials.json` |
+| `GOOGLE_TOKEN_JSON` | Contents of local `token.json` |
+
+In GitHub, go to **Settings -> Secrets and variables -> Actions -> New repository secret**.
+
+Google OAuth caveat: if your OAuth app remains in **Testing** mode, Google may expire the refresh token after 7 days for non-profile scopes such as Calendar. For long-running autonomous sync, move the OAuth app publishing status to **In production** in Google Cloud, then re-run the local OAuth flow once and update `GOOGLE_TOKEN_JSON`.
+
 ## Google Calendar Smoke Test
 
 Install dependencies:

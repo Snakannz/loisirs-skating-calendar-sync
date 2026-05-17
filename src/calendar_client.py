@@ -66,6 +66,26 @@ class GoogleCalendarClient:
     def delete_event(self, calendar_id: str, event_id: str) -> None:
         self.service.events().delete(calendarId=calendar_id, eventId=event_id).execute()
 
+    def list_managed_events(self, calendar_id: str, time_min: str | None = None) -> list[dict]:
+        events = []
+        page_token = None
+
+        while True:
+            request = {
+                "calendarId": calendar_id,
+                "privateExtendedProperty": "source=loisirs-montreal",
+                "singleEvents": True,
+                "pageToken": page_token,
+            }
+            if time_min is not None:
+                request["timeMin"] = time_min
+
+            response = self.service.events().list(**request).execute()
+            events.extend(response.get("items", []))
+            page_token = response.get("nextPageToken")
+            if not page_token:
+                return events
+
     def _build_service(self) -> Any:
         try:
             from google.auth.transport.requests import Request
