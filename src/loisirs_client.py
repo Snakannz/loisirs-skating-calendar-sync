@@ -24,7 +24,7 @@ class LoisirsClient:
 
     def search_activities(
         self,
-        search_string: str | None = "patin",
+        search_string: str | None = "patinage artistique",
         expertise_field_ids: str | None = "361",
         limit: int = 100,
         offset: int = 0,
@@ -82,4 +82,3 @@ class LoisirsClient:
                 "Chrome/124.0 Safari/537.36"
             ),
         }
-

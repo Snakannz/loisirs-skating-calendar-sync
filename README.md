@@ -1,8 +1,8 @@
-# Loisirs Skating Calendar Sync
+# Loisirs Figure Skating Calendar Sync
 
-Python scraper/sync tool for Loisirs Montréal skating availability.
+Python scraper/sync tool for **Patinage artistique** windows on Loisirs Montréal.
 
-Current status: Phase 3. It calls the hidden Loisirs Montréal JSON API, prints normalized skating windows, classifies primary vs secondary skating activities, and can compare timed windows against local SQLite sync state.
+Current status: production-ready v1. It calls the hidden Loisirs Montréal JSON API, keeps only `Patinage artistique`, ignores activities without precise start/end times, and syncs timed windows to Google Calendar.
 
 ## Discovered Endpoints
 
@@ -24,7 +24,7 @@ Activity detail:
 GET https://loisirs.montreal.ca/IC3/api/U5200/public/view/?id=<activity_id>
 ```
 
-The pasted browser URL used `expertiseFieldIds=365`, but on May 16, 2026 that returned zero rows. The live category returning ice-sport rows was `361`, named `Sports sur glace`.
+The pasted browser URL used `expertiseFieldIds=365`, but on May 16, 2026 that returned zero rows. The live category containing ice-sport rows was `361`, named `Sports sur glace`.
 
 ## Run
 
@@ -35,23 +35,21 @@ python3 src/main.py
 Useful options:
 
 ```bash
-python3 src/main.py --search patin --expertise-field-id 361
-python3 src/main.py --kind figure --include-untimed
-python3 src/main.py --kind public --future-only
-python3 src/main.py --kind public --next
-python3 src/main.py --kind public --sync-plan
+python3 src/main.py --include-untimed
+python3 src/main.py --sync-plan
+python3 src/main.py --sync-calendar
 python3 src/main.py --json
 ```
 
-Skating activity kinds:
+Default search/filter:
 
-| Kind | Importance | Meaning |
-| --- | --- | --- |
-| `figure_skating` | `primary` | `Patinage artistique`; the main activity we care about |
-| `public_skate` | `secondary` | `Patin libre` / `Patinage libre`; useful add-on events |
-| `other_skating` | `other` | Ice-sport rows that do not match the first two categories |
+| Setting | Default |
+| --- | --- |
+| Search text | `patinage artistique` |
+| Category | `361` / `Sports sur glace` |
+| Activity kind | Always `figure_skating` |
 
-Current caveat: the live Loisirs API returns `Patinage artistique` as a date-range activity with no timed schedule. The scraper keeps it visible with `--include-untimed`, but it cannot make a precise timed calendar event for that row until the API exposes start/end times or we find another endpoint.
+Current caveat: the live Loisirs API returns `Patinage artistique` as a date-range activity with no timed schedule. The scraper keeps it visible with `--include-untimed`, but it intentionally does not create Google Calendar events unless a precise start and end time is published.
 
 ## SQLite Sync State
 
@@ -65,7 +63,7 @@ The sync state remembers which Loisirs windows have already been matched to Goog
 
 | Column | Meaning |
 | --- | --- |
-| `source_key` | Stable ID for one Loisirs skating window |
+| `source_key` | Stable ID for one Loisirs figure-skating window |
 | `google_event_id` | The matching Google Calendar event ID |
 | `content_hash` | Fingerprint of event content, used to detect changes |
 | `last_seen_at` | When the scraper last saw this window |
@@ -73,26 +71,26 @@ The sync state remembers which Loisirs windows have already been matched to Goog
 Run a safe dry-run plan:
 
 ```bash
-python3 src/main.py --kind public --sync-plan
+python3 src/main.py --sync-plan
 ```
 
-This does not create, update, or delete Google Calendar events. It only compares the current timed skating windows with the local SQLite state and prints what a real sync would do.
+This does not create, update, or delete Google Calendar events. It only compares the current timed figure-skating windows with the local SQLite state and prints what a real sync would do.
 
-Untimed activities, such as the current `Patinage artistique` date range, are intentionally not included in calendar sync planning because they do not have precise start and end times.
-
-Before planning or syncing calendar events, the app deduplicates identical timed windows. If Loisirs returns two activity IDs for the same visible rink/time/title/location, only one Google Calendar event is kept.
+Untimed `Patinage artistique` activities are intentionally not included in calendar sync planning because they do not have precise start and end times.
 
 ## Calendar Sync
 
 After Google OAuth is configured, run:
 
 ```bash
-python3 src/main.py --kind public --sync-calendar
+python3 src/main.py --sync-calendar
 ```
 
 On the first run, the app creates Google Calendar events and saves their Google event IDs in SQLite. On the second run with the same Loisirs data, those same rows become `keep` actions instead of duplicate events.
 
 The sync only considers future timed windows. Saved past events are not deleted just because they are no longer future windows.
+
+Historical note: earlier versions synced public-skate events too. The current app does not. The first sync after this change will delete old app-managed public-skate events from the calendar and keep the calendar reserved for timed `Patinage artistique` windows.
 
 ## GitHub Actions
 
@@ -105,10 +103,10 @@ The repository includes an hourly workflow:
 It runs:
 
 ```bash
-python src/main.py --kind public --sync-calendar --state-backend calendar
+python src/main.py --search "patinage artistique" --sync-calendar --state-backend calendar
 ```
 
-The `calendar` state backend reads existing managed events from Google Calendar extended properties, so GitHub Actions does not need `data/sync.sqlite`.
+The app always filters to `figure_skating`, so GitHub Actions cannot accidentally sync public-skate or other ice-sport activities. The `calendar` state backend reads existing managed events from Google Calendar extended properties, so GitHub Actions does not need `data/sync.sqlite`.
 
 Add these GitHub repository secrets:
 
@@ -157,9 +155,9 @@ python3 src/main.py --calendar-smoke-test --delete-smoke-event
 python3 -m unittest discover -s tests
 ```
 
-## Next Milestones
+## Operating Notes
 
-1. Keep Phase 1 stable: direct API fetch plus normalized skating windows.
-2. Confirm Google Calendar OAuth with the smoke test.
-3. Test real Google Calendar sync end to end.
-4. Schedule with `launchd`.
+- GitHub Actions runs hourly at minute `17`.
+- If Loisirs has no timed `Patinage artistique` windows, the calendar should remain empty.
+- When timed `Patinage artistique` windows are published, the next scheduled run should add them automatically.
+- Manual runs are still available from GitHub Actions via **Run workflow**.

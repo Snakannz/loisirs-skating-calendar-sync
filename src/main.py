@@ -16,8 +16,6 @@ from config import (
 from loisirs_client import LoisirsClient
 from parser import (
     FIGURE_SKATING,
-    OTHER_SKATING,
-    PUBLIC_SKATE,
     dedupe_skating_windows,
     parse_skating_windows,
     parse_untimed_activities,
@@ -29,17 +27,6 @@ from sync_state import (
     summarize_actions,
 )
 from sync_service import sync_calendar
-
-
-KIND_ALIASES = {
-    "all": None,
-    "figure": FIGURE_SKATING,
-    "figure_skating": FIGURE_SKATING,
-    "public": PUBLIC_SKATE,
-    "public_skate": PUBLIC_SKATE,
-    "other": OTHER_SKATING,
-    "other_skating": OTHER_SKATING,
-}
 
 
 def main() -> None:
@@ -62,8 +49,8 @@ def run_fetch(args: argparse.Namespace) -> None:
     )
     windows = parse_skating_windows(response)
     untimed_activities = parse_untimed_activities(response)
-    windows = filter_items_by_kind(windows, args.kind)
-    untimed_activities = filter_items_by_kind(untimed_activities, args.kind)
+    windows = filter_items_by_kind(windows, FIGURE_SKATING)
+    untimed_activities = filter_items_by_kind(untimed_activities, FIGURE_SKATING)
     windows = dedupe_skating_windows(windows)
     windows = sorted(windows, key=lambda window: window.start)
 
@@ -107,10 +94,7 @@ def run_fetch(args: argparse.Namespace) -> None:
             )
 
 
-def filter_items_by_kind(items: list, kind_arg: str) -> list:
-    kind = KIND_ALIASES[kind_arg]
-    if kind is None:
-        return items
+def filter_items_by_kind(items: list, kind: str) -> list:
     return [item for item in items if item.kind == kind]
 
 
@@ -240,20 +224,18 @@ def run_calendar_smoke_test(args: argparse.Namespace) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Fetch skating windows from Loisirs Montréal.")
-    parser.add_argument("--search", default=env_str("LOISIRS_SEARCH_STRING", "patin"), help="Free-text search string.")
+    parser = argparse.ArgumentParser(description="Fetch figure-skating windows from Loisirs Montréal.")
+    parser.add_argument(
+        "--search",
+        default=env_str("LOISIRS_SEARCH_STRING", "patinage artistique"),
+        help="Free-text search string.",
+    )
     parser.add_argument(
         "--expertise-field-id",
         default=env_str("LOISIRS_EXPERTISE_FIELD_IDS", "361"),
         help="Loisirs expertise category id.",
     )
     parser.add_argument("--limit", type=int, default=100, help="Maximum activities to fetch.")
-    parser.add_argument(
-        "--kind",
-        choices=sorted(KIND_ALIASES.keys()),
-        default="all",
-        help="Filter skating windows by kind.",
-    )
     parser.add_argument("--future-only", action="store_true", help="Only show windows that have not started yet.")
     parser.add_argument("--next", action="store_true", help="Only show the next matching timed skating window.")
     parser.add_argument(

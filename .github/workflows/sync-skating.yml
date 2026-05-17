@@ -1,4 +1,4 @@
-name: Sync skating calendar
+name: Sync figure skating calendar
 
 on:
   schedule:
@@ -46,5 +46,5 @@ jobs:
           Path("token.json").write_text(os.environ["GOOGLE_TOKEN_JSON"], encoding="utf-8")
           PY
 
-      - name: Sync public skating events
-        run: python src/main.py --kind public --sync-calendar --state-backend calendar
+      - name: Sync figure skating events
+        run: python src/main.py --search "patinage artistique" --sync-calendar --state-backend calendar
