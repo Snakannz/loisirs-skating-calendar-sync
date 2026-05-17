@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import sqlite3
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from models import SkatingWindow
 
@@ -131,6 +133,31 @@ def summarize_actions(actions: list[SyncAction]) -> dict[str, int]:
     for action in actions:
         summary[action.action] += 1
     return summary
+
+
+def filter_synced_events_starting_at_or_after(
+    synced_events: dict[str, SyncedEvent],
+    cutoff: datetime,
+) -> dict[str, SyncedEvent]:
+    results = {}
+    for source_key, event in synced_events.items():
+        start = _source_key_start_datetime(source_key, cutoff.tzinfo)
+        if start is None or start >= cutoff:
+            results[source_key] = event
+    return results
+
+
+def _source_key_start_datetime(source_key: str, tzinfo) -> datetime | None:
+    parts = source_key.split("|")
+    if len(parts) < 4:
+        return None
+
+    try:
+        day = parts[2]
+        start_time = parts[3]
+        return datetime.fromisoformat(f"{day}T{start_time}").replace(tzinfo=tzinfo or ZoneInfo("UTC"))
+    except ValueError:
+        return None
 
 
 def _row_to_event(row: sqlite3.Row) -> SyncedEvent:

@@ -80,6 +80,18 @@ This does not create, update, or delete Google Calendar events. It only compares
 
 Untimed activities, such as the current `Patinage artistique` date range, are intentionally not included in calendar sync planning because they do not have precise start and end times.
 
+## Calendar Sync
+
+After Google OAuth is configured, run:
+
+```bash
+python3 src/main.py --kind public --sync-calendar
+```
+
+On the first run, the app creates Google Calendar events and saves their Google event IDs in SQLite. On the second run with the same Loisirs data, those same rows become `keep` actions instead of duplicate events.
+
+The sync only considers future timed windows. Saved past events are not deleted just because they are no longer future windows.
+
 ## Google Calendar Smoke Test
 
 Install dependencies:
@@ -120,5 +132,5 @@ python3 -m unittest discover -s tests
 
 1. Keep Phase 1 stable: direct API fetch plus normalized skating windows.
 2. Confirm Google Calendar OAuth with the smoke test.
-3. Wire create/update/delete sync using SQLite state.
+3. Test real Google Calendar sync end to end.
 4. Schedule with `launchd`.

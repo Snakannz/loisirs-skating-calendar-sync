@@ -2,6 +2,7 @@ import sys
 import tempfile
 import unittest
 from dataclasses import replace
+from datetime import datetime
 from pathlib import Path
 
 
@@ -9,7 +10,13 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from calendar_client import build_smoke_test_window
-from sync_state import SyncState, SyncedEvent, plan_sync, summarize_actions
+from sync_state import (
+    SyncState,
+    SyncedEvent,
+    filter_synced_events_starting_at_or_after,
+    plan_sync,
+    summarize_actions,
+)
 
 
 class SyncStateTest(unittest.TestCase):
@@ -80,6 +87,27 @@ class SyncStateTest(unittest.TestCase):
         actions = plan_sync([current], {})
 
         self.assertEqual(summarize_actions(actions), {"create": 1, "update": 0, "keep": 0, "delete": 0})
+
+    def test_filters_saved_past_events_out_of_future_sync_plan(self) -> None:
+        synced_events = {
+            "loisirs-mtl|1|2026-05-16|12:00:00|13:00:00|Arena": SyncedEvent(
+                source_key="loisirs-mtl|1|2026-05-16|12:00:00|13:00:00|Arena",
+                google_event_id="past",
+                content_hash="hash",
+                last_seen_at="2026-05-17T10:00:00-04:00",
+            ),
+            "loisirs-mtl|2|2026-05-18|12:00:00|13:00:00|Arena": SyncedEvent(
+                source_key="loisirs-mtl|2|2026-05-18|12:00:00|13:00:00|Arena",
+                google_event_id="future",
+                content_hash="hash",
+                last_seen_at="2026-05-17T10:00:00-04:00",
+            ),
+        }
+        cutoff = datetime.fromisoformat("2026-05-17T12:00:00-04:00")
+
+        result = filter_synced_events_starting_at_or_after(synced_events, cutoff)
+
+        self.assertEqual(list(result.keys()), ["loisirs-mtl|2|2026-05-18|12:00:00|13:00:00|Arena"])
 
 
 if __name__ == "__main__":
