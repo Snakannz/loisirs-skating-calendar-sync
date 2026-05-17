@@ -1,0 +1,49 @@
+{
+  "recordCount": 2,
+  "results": [
+    {
+      "id": 185408,
+      "description": "Patin libre pour tous",
+      "startDate": "2026-05-20T04:00:00.000Z",
+      "endDate": "2026-05-20T04:00:00.000Z",
+      "basePriceWithTaxes": 0.0,
+      "mainSite": {
+        "id": 2052,
+        "name": "Auditorium de Verdun"
+      },
+      "status": {
+        "id": 0,
+        "name": "Non disponible"
+      },
+      "activitySchedules": [
+        {
+          "id": 35541377,
+          "activityId": 185408,
+          "startTime": "12:00:00",
+          "endTime": "14:00:00",
+          "facility": {
+            "id": 10122,
+            "name": "Auditorium Espace Denis-Savard"
+          }
+        }
+      ]
+    },
+    {
+      "id": 182078,
+      "description": "Patinage artistique",
+      "startDate": "2026-03-21T04:00:00.000Z",
+      "endDate": "2026-05-31T04:00:00.000Z",
+      "basePriceWithTaxes": 0.0,
+      "mainSite": {
+        "id": 2052,
+        "name": "Auditorium de Verdun"
+      },
+      "status": {
+        "id": 0,
+        "name": "Non disponible"
+      },
+      "activitySchedules": []
+    }
+  ]
+}
+
