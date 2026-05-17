@@ -36,8 +36,21 @@ Useful options:
 
 ```bash
 python3 src/main.py --search patin --expertise-field-id 361
+python3 src/main.py --kind figure --include-untimed
+python3 src/main.py --kind public --future-only
+python3 src/main.py --kind public --next
 python3 src/main.py --json
 ```
+
+Skating activity kinds:
+
+| Kind | Importance | Meaning |
+| --- | --- | --- |
+| `figure_skating` | `primary` | `Patinage artistique`; the main activity we care about |
+| `public_skate` | `secondary` | `Patin libre` / `Patinage libre`; useful add-on events |
+| `other_skating` | `other` | Ice-sport rows that do not match the first two categories |
+
+Current caveat: the live Loisirs API returns `Patinage artistique` as a date-range activity with no timed schedule. The scraper keeps it visible with `--include-untimed`, but it cannot make a precise timed calendar event for that row until the API exposes start/end times or we find another endpoint.
 
 ## Google Calendar Smoke Test
 

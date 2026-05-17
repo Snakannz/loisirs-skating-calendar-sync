@@ -19,6 +19,10 @@
         {
           "id": 35541377,
           "activityId": 185408,
+          "dayOfWeek": {
+            "id": 3,
+            "name": null
+          },
           "startTime": "12:00:00",
           "endTime": "14:00:00",
           "facility": {
@@ -43,7 +47,68 @@
         "name": "Non disponible"
       },
       "activitySchedules": []
+    },
+    {
+      "id": 190000,
+      "description": "Patinage artistique",
+      "startDate": "2026-06-01T04:00:00.000Z",
+      "endDate": "2026-06-01T04:00:00.000Z",
+      "basePriceWithTaxes": 0.0,
+      "mainSite": {
+        "id": 2052,
+        "name": "Auditorium de Verdun"
+      },
+      "status": {
+        "id": 1,
+        "name": "À venir"
+      },
+      "activitySchedules": [
+        {
+          "id": 1,
+          "activityId": 190000,
+          "dayOfWeek": {
+            "id": 1,
+            "name": null
+          },
+          "startTime": "09:00:00",
+          "endTime": "10:00:00",
+          "facility": {
+            "id": 10122,
+            "name": "Auditorium Espace Denis-Savard"
+          }
+        }
+      ]
+    },
+    {
+      "id": 190001,
+      "description": "Patin libre pour tous.",
+      "startDate": "2026-06-05T04:00:00.000Z",
+      "endDate": "2026-06-19T04:00:00.000Z",
+      "basePriceWithTaxes": 0.0,
+      "mainSite": {
+        "id": 1917,
+        "name": "Aréna Gadbois"
+      },
+      "status": {
+        "id": 1,
+        "name": "À venir"
+      },
+      "activitySchedules": [
+        {
+          "id": 2,
+          "activityId": 190001,
+          "dayOfWeek": {
+            "id": 5,
+            "name": null
+          },
+          "startTime": "17:00:00",
+          "endTime": "19:00:00",
+          "facility": {
+            "id": 612,
+            "name": "Aire de patinage, aréna Sylvio-Mantha"
+          }
+        }
+      ]
     }
   ]
 }
-

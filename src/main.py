@@ -1,5 +1,7 @@
 import argparse
 import json
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from calendar_client import GoogleCalendarClient, build_smoke_test_window
 from config import (
@@ -11,7 +13,24 @@ from config import (
     resolve_repo_path,
 )
 from loisirs_client import LoisirsClient
-from parser import parse_skating_windows
+from parser import (
+    FIGURE_SKATING,
+    OTHER_SKATING,
+    PUBLIC_SKATE,
+    parse_skating_windows,
+    parse_untimed_activities,
+)
+
+
+KIND_ALIASES = {
+    "all": None,
+    "figure": FIGURE_SKATING,
+    "figure_skating": FIGURE_SKATING,
+    "public": PUBLIC_SKATE,
+    "public_skate": PUBLIC_SKATE,
+    "other": OTHER_SKATING,
+    "other_skating": OTHER_SKATING,
+}
 
 
 def main() -> None:
@@ -33,16 +52,53 @@ def run_fetch(args: argparse.Namespace) -> None:
         limit=args.limit,
     )
     windows = parse_skating_windows(response)
+    untimed_activities = parse_untimed_activities(response)
+    windows = filter_items_by_kind(windows, args.kind)
+    untimed_activities = filter_items_by_kind(untimed_activities, args.kind)
+    windows = sorted(windows, key=lambda window: window.start)
+
+    if args.future_only or args.next:
+        windows = filter_future_windows(windows, args.time_zone)
+
+    if args.next:
+        windows = windows[:1]
 
     if args.json:
-        print(json.dumps([window.to_dict() for window in windows], ensure_ascii=False, indent=2))
+        output = {"windows": [window.to_dict() for window in windows]}
+        if args.include_untimed:
+            output["untimed_activities"] = [activity.to_dict() for activity in untimed_activities]
+        print(json.dumps(output, ensure_ascii=False, indent=2))
         return
 
     print(f"{len(windows)} timed skating windows from {response.get('recordCount', 0)} activities")
     for window in windows:
         start_date, start_time = window.start.split("T")
         end_time = window.end.split("T")[1][:8]
-        print(f"{start_date} {start_time[:8]}-{end_time} | {window.site_name} | {window.title} | {window.status}")
+        print(
+            f"{start_date} {start_time[:8]}-{end_time} | {window.importance} | "
+            f"{window.kind} | {window.site_name} | {window.title} | {window.status}"
+        )
+
+    if args.include_untimed and untimed_activities:
+        print("")
+        print(f"{len(untimed_activities)} untimed skating activities")
+        for activity in untimed_activities:
+            print(
+                f"{activity.start_date} to {activity.end_date} | {activity.importance} | "
+                f"{activity.kind} | {activity.site_name} | {activity.title} | {activity.status}"
+            )
+
+
+def filter_items_by_kind(items: list, kind_arg: str) -> list:
+    kind = KIND_ALIASES[kind_arg]
+    if kind is None:
+        return items
+    return [item for item in items if item.kind == kind]
+
+
+def filter_future_windows(windows: list, time_zone: str) -> list:
+    now = datetime.now(ZoneInfo(time_zone))
+    return [window for window in windows if datetime.fromisoformat(window.start) >= now]
 
 
 def run_calendar_smoke_test(args: argparse.Namespace) -> None:
@@ -74,6 +130,19 @@ def parse_args() -> argparse.Namespace:
         help="Loisirs expertise category id.",
     )
     parser.add_argument("--limit", type=int, default=100, help="Maximum activities to fetch.")
+    parser.add_argument(
+        "--kind",
+        choices=sorted(KIND_ALIASES.keys()),
+        default="all",
+        help="Filter skating windows by kind.",
+    )
+    parser.add_argument("--future-only", action="store_true", help="Only show windows that have not started yet.")
+    parser.add_argument("--next", action="store_true", help="Only show the next matching timed skating window.")
+    parser.add_argument(
+        "--include-untimed",
+        action="store_true",
+        help="Also show matching activities that have no time schedule in the API response.",
+    )
     parser.add_argument("--json", action="store_true", help="Print normalized windows as JSON.")
     parser.add_argument(
         "--calendar-smoke-test",

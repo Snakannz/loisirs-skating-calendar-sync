@@ -119,6 +119,8 @@ def window_to_event(window: SkatingWindow, time_zone: str = DEFAULT_TIME_ZONE) -
                 "source": "loisirs-montreal",
                 "source_key": window.source_key,
                 "content_hash": window.content_hash(),
+                "kind": window.kind,
+                "importance": window.importance,
             }
         },
     }
@@ -135,6 +137,8 @@ def build_smoke_test_window(time_zone: str = DEFAULT_TIME_ZONE) -> SkatingWindow
     return SkatingWindow(
         source_key=source_key,
         title="Test - Patinage Montréal sync",
+        kind="figure_skating",
+        importance="primary",
         start=start.isoformat(),
         end=end.isoformat(),
         location="Test Arena, Montréal",
@@ -145,4 +149,3 @@ def build_smoke_test_window(time_zone: str = DEFAULT_TIME_ZONE) -> SkatingWindow
         site_name="Test Arena",
         facility_name="Test Arena",
     )
-
