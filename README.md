@@ -1,8 +1,8 @@
 # Loisirs Figure Skating Calendar Sync
 
-Python scraper/sync tool for **Patinage artistique** windows on Loisirs Montréal.
+Python scraper/sync tool for figure-skating windows on Loisirs Montréal.
 
-Current status: production-ready v1. It calls the hidden Loisirs Montréal JSON API, keeps only `Patinage artistique`, ignores activities without precise start/end times, and syncs timed windows to Google Calendar.
+Current status: production-ready v1. It calls the hidden Loisirs Montréal JSON API, keeps only figure-skating activities, ignores activities without precise start/end times, and syncs timed windows to Google Calendar.
 
 ## Discovered Endpoints
 
@@ -25,6 +25,8 @@ GET https://loisirs.montreal.ca/IC3/api/U5200/public/view/?id=<activity_id>
 ```
 
 The figure-skating category is `365`, named `Patinage artistique`. Its parent category is `361`, named `Sports sur glace`.
+
+Important naming detail: some timed activities are titled `Patin artistique`, while the category/filter is named `Patinage artistique`. The app handles both labels as figure skating, but the workflow searches for `patin artistique` inside category `365` because that is the combination currently returning the precise timed windows.
 
 ## Run
 
@@ -76,7 +78,7 @@ python3 src/main.py --sync-plan
 
 This does not create, update, or delete Google Calendar events. It only compares the current timed figure-skating windows with the local SQLite state and prints what a real sync would do.
 
-Untimed `Patinage artistique` activities are intentionally not included in calendar sync planning because they do not have precise start and end times.
+Untimed figure-skating activities are intentionally not included in calendar sync planning because they do not have precise start and end times.
 
 ## Calendar Sync
 
@@ -90,7 +92,7 @@ On the first run, the app creates Google Calendar events and saves their Google 
 
 The sync only considers future timed windows. Saved past events are not deleted just because they are no longer future windows.
 
-Historical note: earlier versions synced public-skate events too. The current app does not. The first sync after this change will delete old app-managed public-skate events from the calendar and keep the calendar reserved for timed `Patinage artistique` windows.
+Historical note: earlier versions synced public-skate events too. The current app does not. The first sync after this change will delete old app-managed public-skate events from the calendar and keep the calendar reserved for timed figure-skating windows.
 
 ## GitHub Actions
 
