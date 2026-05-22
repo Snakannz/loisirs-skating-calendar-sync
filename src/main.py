@@ -232,7 +232,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--expertise-field-id",
-        default=env_str("LOISIRS_EXPERTISE_FIELD_IDS", "361"),
+        default=env_str("LOISIRS_EXPERTISE_FIELD_IDS", "365"),
         help="Loisirs expertise category id.",
     )
     parser.add_argument("--limit", type=int, default=100, help="Maximum activities to fetch.")

@@ -25,7 +25,7 @@ class LoisirsClient:
     def search_activities(
         self,
         search_string: str | None = "patin artistique",
-        expertise_field_ids: str | None = "361",
+        expertise_field_ids: str | None = "365",
         limit: int = 100,
         offset: int = 0,
     ) -> dict:

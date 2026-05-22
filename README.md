@@ -24,7 +24,7 @@ Activity detail:
 GET https://loisirs.montreal.ca/IC3/api/U5200/public/view/?id=<activity_id>
 ```
 
-The pasted browser URL used `expertiseFieldIds=365`, but on May 16, 2026 that returned zero rows. The live category containing ice-sport rows was `361`, named `Sports sur glace`.
+The figure-skating category is `365`, named `Patinage artistique`. Its parent category is `361`, named `Sports sur glace`.
 
 ## Run
 
@@ -45,11 +45,11 @@ Default search/filter:
 
 | Setting | Default |
 | --- | --- |
-| Search text | `patinage artistique` |
-| Category | `361` / `Sports sur glace` |
+| Search text | `patin artistique` |
+| Category | `365` / `Patinage artistique` |
 | Activity kind | Always `figure_skating` |
 
-Current caveat: the live Loisirs API returns `Patinage artistique` as a date-range activity with no timed schedule. The scraper keeps it visible with `--include-untimed`, but it intentionally does not create Google Calendar events unless a precise start and end time is published.
+The scraper intentionally ignores activities without precise start and end times. Those activities are visible with `--include-untimed`, but they are not syncable calendar events.
 
 ## SQLite Sync State
 
@@ -103,7 +103,7 @@ The repository includes an hourly workflow:
 It runs:
 
 ```bash
-python src/main.py --search "patinage artistique" --sync-calendar --state-backend calendar
+python src/main.py --search "patin artistique" --expertise-field-id 365 --sync-calendar --state-backend calendar
 ```
 
 The app always filters to `figure_skating`, so GitHub Actions cannot accidentally sync public-skate or other ice-sport activities. The `calendar` state backend reads existing managed events from Google Calendar extended properties, so GitHub Actions does not need `data/sync.sqlite`.
@@ -158,6 +158,6 @@ python3 -m unittest discover -s tests
 ## Operating Notes
 
 - GitHub Actions runs hourly at minute `17`.
-- If Loisirs has no timed `Patinage artistique` windows, the calendar should remain empty.
-- When timed `Patinage artistique` windows are published, the next scheduled run should add them automatically.
+- If Loisirs has no timed `Patinage artistique` / `Patin artistique` windows, the calendar should remain empty.
+- When timed `Patinage artistique` / `Patin artistique` windows are published, the next scheduled run should add them automatically.
 - Manual runs are still available from GitHub Actions via **Run workflow**.
