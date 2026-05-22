@@ -47,4 +47,4 @@ jobs:
           PY
 
       - name: Sync figure skating events
-        run: python src/main.py --search "patinage artistique" --sync-calendar --state-backend calendar
+        run: python src/main.py --search "patin artistique" --sync-calendar --state-backend calendar

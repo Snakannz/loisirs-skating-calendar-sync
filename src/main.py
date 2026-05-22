@@ -227,7 +227,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fetch figure-skating windows from Loisirs Montréal.")
     parser.add_argument(
         "--search",
-        default=env_str("LOISIRS_SEARCH_STRING", "patinage artistique"),
+        default=env_str("LOISIRS_SEARCH_STRING", "patin artistique"),
         help="Free-text search string.",
     )
     parser.add_argument(
