@@ -4,6 +4,16 @@ Python scraper/sync tool for figure-skating windows on Loisirs Montréal.
 
 Current status: production-ready v1. It calls the hidden Loisirs Montréal JSON API, keeps only figure-skating activities, ignores activities without precise start/end times, and syncs timed windows to Google Calendar.
 
+## Operational proof
+
+- Scheduled hourly with GitHub Actions since May 2026.
+- More than 500 observed workflow runs with a success rate above 99%.
+- Fourteen automated tests cover parsing, recurring windows, synchronization planning, idempotence and calendar state.
+- At least 19 real calendar events have been managed without duplicate creation.
+- The two recorded workflow failures were external: one Loisirs Montréal HTTP 500 and one temporary GitHub account suspension response.
+
+These are durable thresholds rather than live counters. GitHub Actions remains the source of truth for current run history.
+
 ## Discovered Endpoints
 
 Search init/filter metadata:
@@ -156,6 +166,10 @@ python3 src/main.py --calendar-smoke-test --delete-smoke-event
 ```bash
 python3 -m unittest discover -s tests
 ```
+
+## Security
+
+OAuth credentials and refresh tokens are never committed. Local files are ignored, while GitHub Actions reconstructs them at runtime from encrypted repository secrets. Before this repository was made public, every historical filename and commit was scanned for credential files, private keys and common token patterns; none were found.
 
 ## Operating Notes
 
